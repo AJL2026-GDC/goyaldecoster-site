@@ -45,3 +45,52 @@ function ui(){if(D.getElementById("gdc-lang"))return;box=D.createElement("div");
 window.gdcTInit=function(){try{new google.translate.TranslateElement({pageLanguage:"en",includedLanguages:L.map(function(l){return l[0]}).join(","),autoDisplay:!1},"gdc-gte")}catch(e){console.error("gdc translate",e)}};
 function boot(){ui();var s=D.createElement("script");s.src="https://translate.google.com/translate_a/element.js?cb=gdcTInit";s.async=!0;D.body.appendChild(s)}
 D.body?boot():addEventListener("DOMContentLoaded",boot)}()}catch(e){console.error("gdc footer TWEAKS",e)}
+try{/*TEAMFIX v1 (Oct 1): titles per Freddy (Owner and Broker of Record; Victoria = Executive Director of Red Rock Lending and REALTOR(R); Gloria = Certified Government Contracts), name spelling fixes, Education & Credentials on every agent page that lacks one (sources: the agent's own bio, then LinkedIn)*/!function(){var D=document,P=location.pathname.replace(/\/+$/,"");
+/*education lines shown on the agent's page and at the top of their home-page panel; empty = nothing found, nothing shown*/
+var EDU={
+"/gloria-joyner":{t:"Gloria",l:["M.B.A."]},
+"/kenea-crespo":{t:"Kenea Crespo",l:["MBA — Florida Memorial University","Associate's degree in Biology"],nohome:1},
+"/liceth-mazo":{t:"Liceth",l:["Bachelor's Degree in Business Administration, Human Talent Management — Medellín, Colombia"],nohome:1},
+"/victoria-ralicki":{t:"Victoria Ralicki",l:["Bachelor's Degree in Business — Bogotá, Colombia"],nopage:1},
+"/felipe-robayo-realtor":{t:"Felipe",l:["Florida State University"]},
+"/marco-silva":{t:"Marco Silva",l:["Tampa School of Real Estate"]},
+"#raj":{t:"Raj",l:["Delhi University"],ex:/^Owner and Real Estate Developer$/},
+"#elsie":{t:"Elsie",l:["B.A., Education/Business — University of Puerto Rico"],ex:/^Managing Broker, Orlando Office$/}
+};
+var VIC="Executive Director of Red Rock Lending and REALTOR®";
+function norm(s){return(s||"").replace(/&nbsp;| /g," ").replace(/\s+/g," ").trim()}
+function setHTML(el,h){el&&norm(el.innerHTML)!==norm(h)&&(el.innerHTML=h)}
+function each(sel,fn){[].forEach.call(D.querySelectorAll(sel),fn)}
+function titles(){
+ /*Freddy: every place his title appears*/
+ each("div,h3,p",function(e){if(e.children.length>4)return;var h=norm(e.innerHTML);
+  if(/^M-Div <br>Th-D Candidate<br>Owner and Managing Broker$/.test(h))setHTML(e,"M-Div <br>Th-D Candidate<br>Owner and Broker of Record");
+  else if(h==="Owner Managing Broker<br>Luxury &amp; Commercial")setHTML(e,"Owner and Broker of Record<br>Luxury &amp; Commercial");
+  else if(h==="REALTOR®<br>Licensed Loan Officer")setHTML(e,VIC+"<br>Licensed Loan Officer");
+  else if(h==="SBA Certified and Government Contracts Specialist")setHTML(e,"Certified Government Contracts");
+ });
+ /*home chips: title lines sit beside the name*/
+ each("a.tab-menu-link",function(a){var w=a.getAttribute("data-w-tab"),n=a.querySelector(".paragraph-sm strong"),ps=[].slice.call(a.querySelectorAll(".paragraph-sm"));
+  if(w==="Darrel"&&n&&norm(n.textContent)==="Darrel DeLoatch")n.textContent="Darrell DeLoatch";
+  ps.forEach(function(p){if(p.querySelector("strong"))return;var h=norm(p.innerHTML);
+   if(w==="Victoria Ralicki"&&h==="REALTOR®")setHTML(p,VIC);
+   if(w==="Gloria"&&/^SBA Certified<br>Government Contracts$/.test(h))setHTML(p,"Certified Government Contracts")});
+ });
+ each(".w-tab-pane .paragraph-xl strong",function(s){var t=norm(s.textContent);t==="Time Bogeajis"&&(s.textContent="Tim Bogeajis");t==="Liceth"&&(s.textContent="Liceth Mazo")});
+ /*profile page headers*/
+ if(P==="/victoria-ralicki")each(".w-col-6 h3",function(h){norm(h.innerHTML)==="REALTOR®"&&setHTML(h,VIC)});
+}
+function edu(){
+ var k,e;
+ /*agent page: append an Education & Credentials block to the bio if the page doesn't already have one*/
+ e=EDU[P];if(e&&e.l.length&&!e.nopage){var bio=D.querySelector(".w-col-6 p[class^='paragraph']");if(bio&&!/Education &amp; Credentials|Education & Credentials/.test(bio.innerHTML)&&!bio.getAttribute("data-gdc-edu")){bio.setAttribute("data-gdc-edu","1");bio.innerHTML+="<br><br>Education &amp; Credentials<br>"+e.l.map(function(x){return x.replace(/&/g,"&amp;")}).join("<br>")}}
+ /*executive team page: degree lines above the title, as on Freddy's*/
+ if(P==="/executive-team")for(k in EDU){e=EDU[k];if(!e.ex)continue;each(".w-col-6 h3",function(h){if(e.ex.test(norm(h.innerHTML))){h.innerHTML=e.l.map(function(x){return x.replace(/ — .*$/,"")}).join("<br>")+"<br>"+h.innerHTML}})}
+ /*home panels: education lines above the title, as on A.J.'s panel*/
+ if(P!=="")return;
+ for(k in EDU){e=EDU[k];if(!e.l.length||e.nohome)continue;
+  var pane=D.querySelector(".w-tab-pane[data-w-tab='"+e.t+"'] .utility-margin-bottom-2rem > div:not(.paragraph-xl)");
+  if(pane&&!pane.getAttribute("data-gdc-edu")){pane.setAttribute("data-gdc-edu","1");pane.innerHTML=e.l.map(function(x){return x.replace(/ — .*$/,"").replace(/&/g,"&amp;")}).join("<br>")+"<br>"+pane.innerHTML}}
+}
+function run(){try{titles();edu()}catch(x){console.error("gdc TEAMFIX",x)}}
+run();addEventListener("load",run);var n=0,iv=setInterval(function(){run();++n>60&&clearInterval(iv)},400)}()}catch(e){console.error("gdc footer TEAMFIX",e)}
