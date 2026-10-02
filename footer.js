@@ -54,7 +54,7 @@ var EDU={
 "/victoria-ralicki":{t:"Victoria Ralicki",l:["Bachelor's Degree in Business — Bogotá, Colombia"],nopage:1},
 "/felipe-robayo-realtor":{t:"Felipe",l:["Florida State University"]},
 "/marco-silva":{t:"Marco Silva",l:["Tampa School of Real Estate"]},
-"#raj":{t:"Raj",l:["Delhi University"],ex:/^Owner and Real Estate Developer$/},
+"#raj":{t:"Raj",l:["Bachelor's, Accounting — Delhi University"],ex:/^Owner and Real Estate Developer$/},
 "#elsie":{t:"Elsie",l:["B.A., Education/Business — University of Puerto Rico"],ex:/^Managing Broker, Orlando Office$/}
 };
 var VIC="Executive Director of Red Rock Lending and REALTOR®";
@@ -135,3 +135,13 @@ function rk(el){var k=(el.getAttribute("data-w-tab")||"")+" ";var a=el.querySele
 function sortBox(b){if(!b)return;var c=[].slice.call(b.children);if(c.length<3)return;var s=c.map(function(e,i){return{e:e,r:rk(e)*100+i}}).sort(function(x,y){return x.r-y.r});var same=s.every(function(x,i){return x.e===c[i]});if(same)return;s.forEach(function(x){b.appendChild(x.e)})}
 function run(){var t=D.querySelector('[data-gdc-team="1"]');if(t){var m=t.querySelector(".w-tab-menu"),p=t.querySelector(".w-tab-content");sortBox(m);sortBox(p)}sortBox(D.querySelector(".gdc-roster-row"))}
 D.addEventListener("DOMContentLoaded",run);addEventListener("load",function(){run();setTimeout(run,600);setTimeout(run,1200)});var n=0,iv=setInterval(function(){run();++n>24&&clearInterval(iv)},500)}()}catch(e){console.error("gdc footer ORDER v2",e)}
+
+try{/*CRED v1 (Oct 2): each agent's highest credential under their photo/name on the home team strip and /agents, per Freddy (Granola 70ee1528: "put the highest degree that they have") and A.J. Only credentials from the agent's own bio/page or LinkedIn; none shown where none is on file. The Executive Team page already shows them under each name.*/!function(){var D=document,C=[["Freddy","M.Div. · Th.D. Candidate"],["Raj","Bachelor's, Accounting"],["Lash","M.A., Applied Sociology"],["Victoria","Bachelor's, Business"],["Elsie","B.A., Education/Business"],["Gloria","M.B.A."],["Tim","Licensed Broker · CIPS"],["Kenea","MBA"],["Priya","B.S., Legal Studies"],["Liceth","Bachelor's, Business Administration"],["Felipe","Florida State University"]];
+var st=D.createElement("style");st.textContent=".gdc-cred{color:#9a7b3c!important;font-size:12.5px!important;line-height:1.35!important;font-weight:600!important;letter-spacing:.02em;margin:2px 0 3px!important}.gdc-roster-row h3:has(.gdc-cred),.gdc-roster-row h4:has(.gdc-cred){flex-direction:column!important}.gdc-roster-row .gdc-cred{display:block;margin:6px 0 0!important;text-align:center}";(D.head||D.documentElement).appendChild(st);
+function cr(t){t=(t||"").replace(/\s+/g," ");for(var i=0;i<C.length;i++)if(t.indexOf(C[i][0])>-1)return C[i][1];return""}
+function mk(tag,c,cls){var d=D.createElement(tag);d.className=cls;d.textContent=c;return d}
+function run(){
+ [].forEach.call(D.querySelectorAll('[data-gdc-team="1"] a.tab-menu-link'),function(a){if(a.querySelector(".gdc-cred"))return;var s=a.querySelector(".paragraph-sm strong");if(!s)return;var c=cr((a.getAttribute("data-w-tab")||"")+" "+s.textContent);if(!c)return;var row=s.closest(".paragraph-sm");row&&row.after(mk("div",c,"paragraph-sm utility-margin-bottom-0 gdc-cred"))});
+ [].forEach.call(D.querySelectorAll(".gdc-roster-row h1,.gdc-roster-row h2,.gdc-roster-row h3,.gdc-roster-row h4"),function(h){if(h.querySelector(".gdc-cred"))return;var c=cr(h.textContent);c&&h.appendChild(mk("span",c,"gdc-cred"))});
+}
+D.addEventListener("DOMContentLoaded",run);addEventListener("load",function(){run();setTimeout(run,800)});var n=0,iv=setInterval(function(){run();++n>24&&clearInterval(iv)},500)}()}catch(e){console.error("gdc footer CRED v1",e)}
