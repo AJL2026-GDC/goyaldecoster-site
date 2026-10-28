@@ -1,3 +1,4 @@
+/* v25.10 — PWGATE v1: branded password gate for /agent-portal and /deal-room (Oct 28 2026) */
 /* v25.9 — PORTAL v2 (Agent Back Office: SignNow, Contract to Closing + DA, compliance log, contacts) + AGENTLOGIN v1 header/footer link (Oct 28 2026) */
 /* v25.8 — KRITHIKA v1: Krithika Beechagonda added to /agents roster, home team strip order and credentials (Oct 26 2026) */
 /* v25.7 — B13 listings (Oct 26 2026): NEWLIST v1 home cards (901 N Grove; 350 N Phelps rental; Marco Silva x5), LISTPAGES data + /listings de-dupe (166 Hammock once); one docs base → 99634b070be1a3a7db021a6d4a920ae3cdafa028 + v25.6 — docs base → 99634b070be1a3a7db021a6d4a920ae3cdafa028 (Ball Park OM v2: fleur-de-lis marker + A.J. first in Enquiries, Oct 25 2026) + v25.5 — BALLPARK v1: 0 Ball Park Rd, Kissimmee ground-lease card + offering memorandum (Oct 23 2026); one docs base → 99634b070be1a3a7db021a6d4a920ae3cdafa028 (also carries RAJPHOTO v1, Oct 23) + v25.3 */
@@ -326,3 +327,36 @@ var st=D.createElement("style");st.textContent=".gdc-agentlogin{position:absolut
 function run(){var n=D.querySelector(".nav-container.w-nav")||D.querySelector(".w-nav");if(n&&!D.querySelector(".gdc-agentlogin")){if(getComputedStyle(n).position==="static")n.style.position="relative";var a=D.createElement("a");a.className="gdc-agentlogin";a.href="/agent-portal";a.textContent="Agent login";a.setAttribute("aria-label","Agent login (Goyal & DeCoster agents only)");n.appendChild(a)}
 var j=D.querySelector('footer a.footer-link[href="/join"]');if(j&&!D.querySelector("footer [data-gdc-agentlogin]")){var li=j.closest("li")||j.parentElement,c=li.cloneNode(!0),x=c.querySelector("a")||c;x.setAttribute("href","/agent-portal");x.setAttribute("data-gdc-agentlogin","1");var t=[].filter.call(x.querySelectorAll("*"),function(e){return!e.children.length&&/join/i.test(e.textContent)})[0]||x;t.textContent=/^[A-Z ]+$/.test(t.textContent.trim())?"AGENT LOGIN":"Agent Login";li.after(c)}}
 "loading"!==D.readyState?run():D.addEventListener("DOMContentLoaded",run);addEventListener("load",run);var k=0,iv=setInterval(function(){run();++k>20&&clearInterval(iv)},500)}()}catch(e){console.error("gdc footer AGENTLOGIN v1",e)}
+/* PWGATE v1 — branded Webflow password gate for /agent-portal and /deal-room (Oct 28 2026) */
+(function(){try{
+var w=document.querySelector('.w-password-page.utility-page-content');if(!w)return;
+var P=location.pathname.replace(/\/+$/,'');
+var T=P==='/deal-room'?'Deal Room':'Agent Login';
+var S=P==='/deal-room'?'Goyal & DeCoster · Internal deal room':'Goyal & DeCoster · Agent back office';
+var css='html,body{background:#0C1236!important}'+
+'.utility-page-wrap{position:fixed!important;inset:0;z-index:50;display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;max-width:none!important;height:auto!important;overflow:auto;background:#0C1236;padding:24px 0;box-sizing:border-box}'+
+'.utility-page-content.w-password-page{width:100%!important;max-width:420px!important;margin:auto!important;padding:0 16px;box-sizing:border-box;display:block!important}'+
+'form.utility-page-form.w-password-page{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:0;background:#fff;border-top:3px solid #B88B34;padding:34px 30px 30px;box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:left}'+
+'form.utility-page-form.w-password-page>img{display:none!important}'+
+'.gdc-gate-k{font:500 10.5px/1.4 "IBM Plex Sans",Helvetica,Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#B88B34;margin:0 0 10px}'+
+'form.utility-page-form.w-password-page h2{font-family:"Cormorant Garamond",Georgia,serif!important;font-weight:500!important;font-size:34px!important;line-height:1.1!important;color:#0C1236!important;margin:0 0 6px!important;width:auto!important;text-align:left!important}'+
+'.gdc-gate-s{font:400 14px/1.55 "IBM Plex Sans",Helvetica,Arial,sans-serif;color:#565E7A;margin:0 0 22px}'+
+'label.w-password-page{font:500 10.5px/1.4 "IBM Plex Sans",Helvetica,Arial,sans-serif!important;letter-spacing:.14em;text-transform:uppercase;color:#0C1236!important;margin:0 0 7px!important;width:auto!important}'+
+'input.w-password-page.w-input{width:100%!important;height:44px!important;box-sizing:border-box;border:1px solid rgba(12,18,54,.25)!important;border-radius:0!important;padding:0 12px!important;font:400 15px "IBM Plex Sans",Helvetica,Arial,sans-serif!important;color:#0C1236;margin:0 0 14px!important}'+
+'input.w-password-page.w-input:focus{outline:none;border-color:#B88B34!important}'+
+'input.w-password-page.w-button{width:100%!important;height:46px;background:#0C1236!important;color:#fff!important;border:0!important;border-radius:0!important;font:500 12px "IBM Plex Sans",Helvetica,Arial,sans-serif!important;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}'+
+'input.w-password-page.w-button:hover{background:#B88B34!important}'+
+'.w-password-page.w-form-fail{margin:12px 0 0!important;font:400 13px "IBM Plex Sans",Helvetica,Arial,sans-serif}'+
+'.gdc-gate-h{font:400 12.5px/1.55 "IBM Plex Sans",Helvetica,Arial,sans-serif;color:#565E7A;margin:18px 0 0;padding-top:14px;border-top:1px solid rgba(12,18,54,.1)}.gdc-gate-h a{color:#8A6522}'+
+'.gdc-gate-b{display:block;text-align:center;margin:18px 0 0;font:500 10.5px/1.4 "IBM Plex Sans",Helvetica,Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#D2AC4F!important;text-decoration:none}';
+var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+document.title=T+' | Goyal & DeCoster';
+var f=w.querySelector('form');if(!f)return;
+var h=f.querySelector('h2');
+var k=document.createElement('div');k.className='gdc-gate-k';k.textContent=S;
+if(h){h.textContent=T;f.insertBefore(k,h);var s=document.createElement('div');s.className='gdc-gate-s';s.textContent='For Goyal & DeCoster agents and staff. Enter the office password from the brokerage.';h.parentNode.insertBefore(s,h.nextSibling)}
+var ip=f.querySelector('input.w-input');if(ip)ip.setAttribute('placeholder','Office password');
+var bt=f.querySelector('input.w-button');if(bt)bt.value='Enter';
+var hp=document.createElement('div');hp.className='gdc-gate-h';hp.innerHTML='Need access? Email <a href="mailto:info@goyaldecoster.com">info@goyaldecoster.com</a>.';f.appendChild(hp);
+var b=document.createElement('a');b.className='gdc-gate-b';b.href='/';b.textContent='← Back to goyaldecoster.com';w.appendChild(b);
+}catch(e){}})();
