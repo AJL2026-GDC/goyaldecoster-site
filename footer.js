@@ -1,3 +1,4 @@
+/* v25.24 — AUTH v1: personal sign-in required on /agent-portal (own company email + password via the gdc-portal-auth login service; access log; sign out) (Nov 5 2026) */
 /* v25.23 — QUICKWINS v1.1: Jim removed from Brokerage Contacts (A.J., Nov 4: Jim is not a partner in Goyal & DeCoster) (Nov 4 2026) */
 /* v25.22 — QUICKWINS v1: portal Drive links → company shared drive; Raj + Jim on Brokerage Contacts; "My Commission Tracker" + "Leadership Cockpit" coming tiles; gate page no longer shows the "being set up" line (Nov 4 2026) */
 /* v25.21 — ANGELICA v1: Angélica Medina added to /agents roster, home team strip order and credentials (Nov 2 2026) */
@@ -18,6 +19,86 @@
 /* v25.3 — RAWYA v1: Rawya Alrayyis added to /agents roster, home team strip order and credentials (Oct 21 2026) + v25.2 — OFFMKT v1: International Drive / Lake Bryan parcel removed from public pages (Oct 21 2026) + v25.1 */
 /* v25.1 — RAJ v1 (Raj's title) + v24.2 + docs base → 99634b070be1a3a7db021a6d4a920ae3cdafa028 (Freddy + Raj contact block on all flyers, Oct 20 2026) */
 /* goyaldecoster.com: FOOTER custom code, moved out of Webflow Site settings on 2026-09-28. v22 (Oct 12 2026): every docs/ base is 4f42d68 (one base; PDFMAP v3 card images need the same base as PDFMAP v1.1). Each original <script> block is wrapped so one failure cannot stop the rest; order is preserved. */
+/* AUTH v1 — personal sign-in on /agent-portal (Nov 5 2026, roadmap 2a; A.J.: "Require login now"). After the office password, each person signs in with their own company email and password (login service gdc-portal-auth). The page stays hidden until the login service confirms an active session. Session token in sessionStorage gdc_token (12 h). Every page view is written to the access log. */
+(function(){try{
+if((location.pathname||"").replace(/\/+$/,"").toLowerCase()!=="/agent-portal")return;
+if(document.querySelector(".w-password-page"))return;
+if(window.__gdcAuth)return;window.__gdcAuth=1;
+var API="https://gdc-portal-auth.andrewjlash.workers.dev";
+var R={agent:"Agent",managing_broker:"Managing Broker",director:"Director"};
+var D=document,H=D.documentElement;
+var F='"IBM Plex Sans",Helvetica,Arial,sans-serif',G='"Cormorant Garamond",Georgia,serif';
+var css='html.gdc-locked body>*:not(#gdc-auth){display:none!important}html.gdc-locked,html.gdc-locked body{background:#0C1236!important;overflow:hidden!important}'+
+'#gdc-auth{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0C1236;overflow:auto;padding:24px 16px;box-sizing:border-box}'+
+'#gdc-auth .ga-card{width:100%;max-width:420px;background:#fff;border-top:3px solid #B88B34;padding:34px 30px 30px;box-shadow:0 18px 50px rgba(0,0,0,.35);box-sizing:border-box;text-align:left}'+
+'#gdc-auth .ga-k{font:500 10.5px/1.4 '+F+';letter-spacing:.16em;text-transform:uppercase;color:#B88B34;margin:0 0 10px}'+
+'#gdc-auth h2{font:500 34px/1.1 '+G+';color:#0C1236;margin:0 0 6px}'+
+'#gdc-auth .ga-s{font:400 14px/1.55 '+F+';color:#565E7A;margin:0 0 22px}'+
+'#gdc-auth label{display:block;font:500 10.5px/1.4 '+F+';letter-spacing:.14em;text-transform:uppercase;color:#0C1236;margin:0 0 7px}'+
+'#gdc-auth input{display:block;width:100%;height:44px;box-sizing:border-box;border:1px solid rgba(12,18,54,.25);border-radius:0;padding:0 12px;font:400 15px '+F+';color:#0C1236;margin:0 0 14px;background:#fff}'+
+'#gdc-auth input:focus{outline:none;border-color:#B88B34}'+
+'#gdc-auth button{width:100%;height:46px;background:#0C1236;color:#fff;border:0;border-radius:0;font:500 12px '+F+';letter-spacing:.16em;text-transform:uppercase;cursor:pointer}'+
+'#gdc-auth button:hover{background:#B88B34}#gdc-auth button[disabled]{opacity:.6;cursor:wait}'+
+'#gdc-auth .ga-e{min-height:0;margin:12px 0 0;font:400 13px/1.5 '+F+';color:#A33A2B}#gdc-auth .ga-e:empty{display:none}'+
+'#gdc-auth .ga-h{font:400 12.5px/1.55 '+F+';color:#565E7A;margin:18px 0 0;padding-top:14px;border-top:1px solid rgba(12,18,54,.1)}#gdc-auth .ga-h a{color:#8A6522}'+
+'#gdc-auth .ga-b{display:block;text-align:center;margin:18px 0 0;font:500 10.5px/1.4 '+F+';letter-spacing:.16em;text-transform:uppercase;color:#D2AC4F;text-decoration:none}'+
+'#gdc-auth .ga-w{font:400 14px/1.55 '+F+';color:#565E7A;margin:0}'+
+'html.gdc-in body{padding-bottom:64px!important}#gdc-userbar{position:fixed;left:16px;bottom:16px;z-index:2147482000;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;max-width:calc(100vw - 32px);box-sizing:border-box;background:#0C1236;border-left:3px solid #B88B34;color:#fff;padding:9px 14px;font:400 12.5px/1.4 '+F+';box-shadow:0 8px 24px rgba(0,0,0,.25)}'+
+'#gdc-userbar b{font-weight:500}#gdc-userbar span{color:#D2AC4F}#gdc-userbar a,#gdc-userbar button{background:none;border:0;padding:0;color:#fff;text-decoration:underline;text-underline-offset:2px;font:inherit;cursor:pointer}#gdc-userbar a:hover,#gdc-userbar button:hover{color:#D2AC4F}';
+var st=D.createElement("style");st.id="gdc-auth-css";st.textContent=css;(D.head||H).appendChild(st);
+H.classList.add("gdc-locked");
+var ov=D.createElement("div");ov.id="gdc-auth";ov.setAttribute("role","dialog");ov.setAttribute("aria-label","Agent sign-in");
+function mount(){if(!ov.parentNode)D.body.appendChild(ov)}
+function card(html){ov.innerHTML='<div class="ga-card"><div class="ga-k">Goyal &amp; DeCoster \u00b7 Agent back office</div>'+html+'</div><a class="ga-b" href="/">\u2190 Back to goyaldecoster.com</a>';mount()}
+function getTok(){try{return sessionStorage.getItem("gdc_token")||""}catch(e){return""}}
+function setTok(t,u){try{sessionStorage.setItem("gdc_token",t);if(u)sessionStorage.setItem("gdc_user",JSON.stringify(u))}catch(e){}}
+function clrTok(){try{sessionStorage.removeItem("gdc_token");sessionStorage.removeItem("gdc_user")}catch(e){}}
+function api(path,opt){opt=opt||{};var h={"Content-Type":"application/json"};var t=getTok();if(t)h.Authorization="Bearer "+t;
+ return fetch(API+path,{method:opt.method||"GET",headers:h,body:opt.body?JSON.stringify(opt.body):undefined,credentials:"omit",cache:"no-store"}).then(function(r){return r.json().catch(function(){return{}}).then(function(j){j.__status=r.status;return j})})}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function showLogin(msg){
+ card('<h2>Agent Login</h2><div class="ga-s">Sign in with your Goyal &amp; DeCoster email and your own password.</div>'+
+ '<form id="ga-f" novalidate><label for="ga-em">Company email</label><input id="ga-em" name="username" type="email" autocomplete="username" inputmode="email" placeholder="name@goyaldecoster.com" required>'+
+ '<label for="ga-pw">Password</label><input id="ga-pw" name="password" type="password" autocomplete="current-password" placeholder="Your password" required>'+
+ '<button type="submit" id="ga-go">Sign in</button><div class="ga-e" id="ga-err" role="alert">'+esc(msg||"")+'</div></form>'+
+ '<div class="ga-h">New, or forgot your password? Ask A.J. for a sign-in link: <a href="mailto:aj.lash@goyaldecoster.com?subject=Agent%20back%20office%20sign-in%20link">aj.lash@goyaldecoster.com</a>.</div>');
+ var f=D.getElementById("ga-f"),em=D.getElementById("ga-em"),pw=D.getElementById("ga-pw"),go=D.getElementById("ga-go"),er=D.getElementById("ga-err");
+ try{var last=localStorage.getItem("gdc_last_email");if(last)em.value=last}catch(e){}
+ setTimeout(function(){(em.value?pw:em).focus()},50);
+ f.addEventListener("submit",function(ev){ev.preventDefault();er.textContent="";
+  var e=em.value.trim(),p=pw.value;if(!e||!p){er.textContent="Enter your email and password.";return}
+  go.disabled=true;go.textContent="Signing in\u2026";
+  api("/auth/login",{method:"POST",body:{email:e,password:p}}).then(function(j){
+   if(j.token){setTok(j.token,j.user);try{localStorage.setItem("gdc_last_email",e.toLowerCase())}catch(x){}unlock(j.user,true);return}
+   go.disabled=false;go.textContent="Sign in";pw.value="";
+   er.textContent=j.__status===401?"That email and password don't match an active login. If you haven't set your password yet, use the link in your sign-in email.":"Sign-in didn't go through. Please try again.";
+  }).catch(function(){go.disabled=false;go.textContent="Sign in";er.textContent="The sign-in service can't be reached right now. Check your connection and try again."});
+ });
+}
+var bar=null,timer=null;
+function unlock(u,fresh){
+ H.classList.remove("gdc-locked");H.classList.add("gdc-in");if(ov.parentNode)ov.parentNode.removeChild(ov);
+ if(!bar){bar=D.createElement("div");bar.id="gdc-userbar";D.body.appendChild(bar)}
+ var adm=(u.role==="director"||u.role==="managing_broker")?'<a href="'+API+'/admin" target="_blank" rel="noopener">Admin</a>':"";
+ bar.innerHTML='Signed in as <b>'+esc(u.name||u.email)+'</b> <span>'+esc(R[u.role]||u.role||"")+'</span>'+adm+'<button type="button" id="gdc-out">Sign out</button>';
+ D.getElementById("gdc-out").onclick=function(){api("/auth/logout",{method:"POST"}).catch(function(){}).then(function(){clrTok();location.reload()})};
+ api("/auth/log",{method:"POST",body:{page:location.pathname+(location.hash||"")}}).catch(function(){});
+ if(!timer)timer=setInterval(check,10*60*1000);
+ try{window.dispatchEvent(new CustomEvent("gdc:auth",{detail:u}))}catch(e){}
+}
+function lock(msg){clrTok();H.classList.remove("gdc-in");if(bar&&bar.parentNode){bar.parentNode.removeChild(bar);bar=null}if(timer){clearInterval(timer);timer=null}H.classList.add("gdc-locked");showLogin(msg)}
+function check(){if(!getTok())return lock("");api("/auth/me").then(function(j){if(j.__status===401)lock("Your session has ended. Please sign in again.")}).catch(function(){})}
+var m=/(?:^|[#&])gdc_token=([a-f0-9]{32,128})/.exec(location.hash||"");
+if(m){setTok(m[1]);try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}}
+function start(){
+ if(!getTok())return showLogin("");
+ card('<h2>Agent Login</h2><p class="ga-w">Checking your sign-in\u2026</p>');
+ api("/auth/me").then(function(j){if(j.user){setTok(getTok(),j.user);unlock(j.user)}else{clrTok();showLogin(j.__status===401?"Your session has ended. Please sign in again.":"")}})
+ .catch(function(){showLogin("The sign-in service can't be reached right now. Check your connection and try again.")});
+}
+if(D.body)start();else D.addEventListener("DOMContentLoaded",start);
+D.addEventListener("visibilitychange",function(){if(D.visibilityState==="visible"&&bar)check()});
+}catch(e){console.error("gdc footer AUTH v1",e)}})();
 try{/*VR*/(()=>{const R=s=>s.replace(/Maura (Victoria )?/g,"Victoria "),w=document.createTreeWalker(document.body,4);let n;while(n=w.nextNode())/Maura/.test(n.data)&&!/SCRIPT|STYLE/.test(n.parentNode.tagName)&&(n.data=R(n.data));document.title=R(document.title)})()}catch(e){console.error("gdc footer block 1",e)}
 try{!function(){var e=document.querySelector(".nav");function t(){e&&document.documentElement.style.setProperty("--gdc-navh",e.getBoundingClientRect().height+"px")}t(),window.addEventListener("resize",t);for(var n=document.querySelectorAll("section.section"),o=0;o<n.length;o++){var l=n[o];l.querySelector(".w-button")&&!l.querySelector(".w-tabs,.w-form,.w-dropdown,.w-slider")&&l.innerText.trim().split(/\s+/).length<120&&l.classList.add("gdc-cta")}var r=document.createElement("button");r.className="gdc-top",r.type="button",r.setAttribute("aria-label","Back to top"),r.innerHTML="&#8593;",r.addEventListener("click",function(){window.scrollTo({top:0,behavior:"smooth"})}),document.body.appendChild(r);var i=[],c=null,a=document.getElementById("home")||document.querySelector("header.section"),d=document.querySelectorAll('.grid-2 a[href^="#"]');if(d.length>=3&&e){(c=document.createElement("nav")).className="gdc-pbar",c.setAttribute("aria-label","Practice areas");for(var s=document.createElement("ul"),u=0;u<d.length;u++){var m=d[u],g=m.getAttribute("href").slice(1),h=document.getElementById(g);if(h){var p=document.createElement("li"),v=document.createElement("a");v.href="#"+g,v.textContent=m.textContent.trim(),p.appendChild(v),s.appendChild(p),i.push({el:h,link:v})}}c.appendChild(s),e.parentNode.insertBefore(c,e.nextSibling)}function f(){var t=window.scrollY||document.documentElement.scrollTop;if(r.classList.toggle("is-on",t>900),c){var n=a?a.getBoundingClientRect().bottom:200;c.classList.toggle("is-on",n<0);for(var o=null,l=(e.getBoundingClientRect().height||110)+60,d=0;d<i.length;d++)i[d].el.getBoundingClientRect().top-l<=0&&(o=i[d]);for(var s=0;s<i.length;s++)i[s].link.classList.toggle("is-active",i[s]===o)}}window.addEventListener("scroll",f,{passive:!0}),f()}()}catch(e){console.error("gdc footer block 2",e)}
 try{!function(){var e=document.querySelector(".nav");function t(e,t){var n=window.scrollY||document.documentElement.scrollTop,o=e-n,i=Math.min(650,380+.03*Math.abs(o)),a=null;if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return window.scrollTo(0,e),void(t&&t());requestAnimationFrame(function e(c){null===a&&(a=c);var r,l=Math.min(1,(c-a)/i);window.scrollTo(0,n+o*((r=l)<.5?4*r*r*r:1-Math.pow(-2*r+2,3)/2)),l<1?requestAnimationFrame(e):t&&t()})}document.addEventListener("click",function(n){var o=n.target.closest&&n.target.closest('a[href*="#"]');if(o){var i;try{i=new URL(o.getAttribute("href"),location.href)}catch(e){return}if(i.origin===location.origin&&i.pathname.replace(/\/$/,"")===location.pathname.replace(/\/$/,"")){var a=i.hash.slice(1);if(a){var c=document.getElementById(a);if(c){n.preventDefault();var r,l=c.getBoundingClientRect().top+(window.scrollY||document.documentElement.scrollTop)-((e?e.getBoundingClientRect().height:110)+((r=document.querySelector(".gdc-pbar"))&&r.classList.contains("is-on")?r.getBoundingClientRect().height:0)+16);t(Math.max(0,l),function(){try{history.pushState(null,"","#"+a)}catch(e){}})}}}}},!0);var n=document.querySelector(".gdc-top");n&&n.addEventListener("click",function(e){e.stopImmediatePropagation(),e.preventDefault(),t(0)},!0)}()}catch(e){console.error("gdc footer block 3",e)}
