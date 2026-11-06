@@ -1,3 +1,4 @@
+/* v25.31 — AUTH v1.1 (Nov 6 2026, Elsie sign-in): login form checks for a full @goyaldecoster.com address before sending (several attempts used "goyaldecoster" alone) and has a Show-password toggle; pairs with login service v0.4 (set-password signs the person straight in) */
 /* v25.30 — PACKAGES v2 (Nov 6 2026): sale, lease and property-management packages S1–S9 live in SignNow Team Templates (GDC PKG S# - Rev 11-2026); L1–L6 re-pointed to the stamp-free Rev 11-2026 packages (no TransactionDesk / SkySlope / "licensed to" footers on any form); "Start a Sale or Lease Package" tile live; Forms Library: 44 forms + downloads (Stellar MLS data-entry sheets, EPA lead pamphlet) in docs/forms-library@9cd73e5 */
 /* v25.29 — PINEHILLS v1.1: Pine Hills OM link → revision with A.J. Lash replacing Raj Goyal on the Enquiries page (per Freddy); the two one-docs-base link rewriters now leave the Pine Hills OM on its own commit (it was being rewritten to the 99634b0 base, where the file doesn't exist → 404) (Nov 6 2026) */
 /* v25.28 — VIEWTOGGLE v1: directors (and the Managing Broker) switch between Admin view and Standard view (exactly what an agent sees); Admin row with Logins, Brand Approvals and the switch (Nov 6 2026) */
@@ -68,13 +69,15 @@ function showLogin(msg){
  card('<h2>Agent Login</h2><div class="ga-s">Sign in with your Goyal &amp; DeCoster email and your own password.</div>'+
  '<form id="ga-f" novalidate><label for="ga-em">Company email</label><input id="ga-em" name="username" type="email" autocomplete="username" inputmode="email" placeholder="name@goyaldecoster.com" required>'+
  '<label for="ga-pw">Password</label><input id="ga-pw" name="password" type="password" autocomplete="current-password" placeholder="Your password" required>'+
+ '<label class="ga-show" style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-weight:400;margin:-6px 0 14px"><input type="checkbox" id="ga-show" style="width:auto;height:auto;margin:0;display:inline"> Show password</label>'+
  '<button type="submit" id="ga-go">Sign in</button><div class="ga-e" id="ga-err" role="alert">'+esc(msg||"")+'</div></form>'+
  '<div class="ga-h">New, or forgot your password? Ask A.J. for a sign-in link: <a href="mailto:aj.lash@goyaldecoster.com?subject=Agent%20back%20office%20sign-in%20link">aj.lash@goyaldecoster.com</a>.</div>');
  var f=D.getElementById("ga-f"),em=D.getElementById("ga-em"),pw=D.getElementById("ga-pw"),go=D.getElementById("ga-go"),er=D.getElementById("ga-err");
  try{var last=localStorage.getItem("gdc_last_email");if(last)em.value=last}catch(e){}
+ var sh=D.getElementById("ga-show");if(sh)sh.onchange=function(){pw.type=sh.checked?"text":"password"};
  setTimeout(function(){(em.value?pw:em).focus()},50);
  f.addEventListener("submit",function(ev){ev.preventDefault();er.textContent="";
-  var e=em.value.trim(),p=pw.value;if(!e||!p){er.textContent="Enter your email and password.";return}
+  var e=em.value.trim(),p=pw.value;if(!e||!p){er.textContent="Enter your email and password.";return}if(e.indexOf("@")<0){er.textContent="Use your full company email address, for example first.last@goyaldecoster.com.";em.focus();return}
   go.disabled=true;go.textContent="Signing in\u2026";
   api("/auth/login",{method:"POST",body:{email:e,password:p}}).then(function(j){
    if(j.token){setTok(j.token,j.user);try{localStorage.setItem("gdc_last_email",e.toLowerCase())}catch(x){}unlock(j.user,true);return}
