@@ -1,3 +1,4 @@
+/* v25.28 — VIEWTOGGLE v1: directors (and the Managing Broker) switch between Admin view and Standard view (exactly what an agent sees); Admin row with Logins, Brand Approvals and the switch (Nov 6 2026) */
 /* v25.27 — PINEHILLS v1: Orlando Duplex Portfolio (4909–4927 N Pine Hills Rd, $1,000,000) card on home Commercial (after 901 N Grove) and /commercial, OM in docs/ (Nov 5 2026) */
 /* v25.26 — BACKOFFICE v1.1: "Start here" + Brand Rules + Submit for Brand Approval row (Elsie reviews in Admin); Leadership tile for directors only; Admin opens without a second sign-in; account text updated for individual logins (Nov 5 2026) */
 /* v25.25 — ONELOGIN v1: one login for /agent-portal (office password removed); back-office content now comes from the login service after sign-in, by role — deal register + internal notes for directors only (Nov 5 2026) */
@@ -47,6 +48,8 @@ var css='html.gdc-locked body>*:not(#gdc-auth){display:none!important}html.gdc-l
 '#gdc-auth .ga-b{display:block;text-align:center;margin:18px 0 0;font:500 10.5px/1.4 '+F+';letter-spacing:.16em;text-transform:uppercase;color:#D2AC4F;text-decoration:none}'+
 '#gdc-auth .ga-w{font:400 14px/1.55 '+F+';color:#565E7A;margin:0}'+
 'html.gdc-in body{padding-bottom:64px!important}#gdc-userbar{position:fixed;left:16px;bottom:16px;z-index:2147482000;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;max-width:calc(100vw - 32px);box-sizing:border-box;background:#0C1236;border-left:3px solid #B88B34;color:#fff;padding:9px 14px;font:400 12.5px/1.4 '+F+';box-shadow:0 8px 24px rgba(0,0,0,.25)}'+
+'.gdc-vt{display:inline-flex;border:1px solid rgba(210,172,79,.6);border-radius:4px;overflow:hidden}#gdc-userbar .gdc-vt button{text-decoration:none;padding:3px 9px;color:#fff;font-size:12px}#gdc-userbar .gdc-vt button.on{background:#B88B34;color:#0C1236;font-weight:500}#gdc-userbar .gdc-vt button:not(.on):hover{color:#D2AC4F}'+
+'html.gdc-std body{padding-top:42px!important}#gdc-viewnote{position:fixed;top:0;left:0;right:0;z-index:2147481000;background:#F6F2E8;border-bottom:2px solid #B88B34;color:#0C1236;text-align:center;padding:9px 16px;font:400 13.5px/1.4 '+F+'}#gdc-viewnote button{margin-left:10px;background:#0C1236;color:#fff;border:0;border-radius:4px;padding:5px 11px;font:500 12px '+F+';cursor:pointer}'+
 '#gdc-userbar b{font-weight:500}#gdc-userbar span{color:#D2AC4F}#gdc-userbar a,#gdc-userbar button{background:none;border:0;padding:0;color:#fff;text-decoration:underline;text-underline-offset:2px;font:inherit;cursor:pointer}#gdc-userbar a:hover,#gdc-userbar button:hover{color:#D2AC4F}';
 var st=D.createElement("style");st.id="gdc-auth-css";st.textContent=css;(D.head||H).appendChild(st);
 H.classList.add("gdc-locked");
@@ -78,12 +81,22 @@ function showLogin(msg){
   }).catch(function(){go.disabled=false;go.textContent="Sign in";er.textContent="The sign-in service can't be reached right now. Check your connection and try again."});
  });
 }
-var bar=null,timer=null;
+var bar=null,timer=null,CUR=null;
+function vw(){try{return sessionStorage.getItem("gdc_view")==="standard"?"standard":"admin"}catch(e){return"admin"}}
+function isAdm(u){return!!u&&(u.role==="director"||u.role==="managing_broker")}
+window.gdcRole=function(){if(!CUR)return"";return isAdm(CUR)&&vw()==="standard"?"agent":CUR.role};
+window.gdcView=function(){return isAdm(CUR)?vw():""};
+window.gdcAdminUrl=function(){return API+"/admin#gdc_token="+getTok()};
+window.gdcSetView=function(v){try{sessionStorage.setItem("gdc_view",v==="standard"?"standard":"admin")}catch(e){}location.reload()};
 function unlock(u,fresh){
  H.classList.remove("gdc-locked");H.classList.add("gdc-in");if(ov.parentNode)ov.parentNode.removeChild(ov);
  if(!bar){bar=D.createElement("div");bar.id="gdc-userbar";D.body.appendChild(bar)}
- var adm=(u.role==="director"||u.role==="managing_broker")?'<a href="'+API+'/admin#gdc_token='+getTok()+'" target="_blank" rel="noopener">Admin</a>':"";
- bar.innerHTML='Signed in as <b>'+esc(u.name||u.email)+'</b> <span>'+esc(R[u.role]||u.role||"")+'</span>'+adm+'<button type="button" id="gdc-out">Sign out</button>';
+ CUR=u;var A=isAdm(u),V=vw();
+ var adm=A&&V==="admin"?'<a href="'+window.gdcAdminUrl()+'" target="_blank" rel="noopener">Admin</a>':"";
+ var tg=A?'<span class="gdc-vt" role="group" aria-label="View"><button type="button" data-v="admin"'+(V==="admin"?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>Admin view</button><button type="button" data-v="standard"'+(V==="standard"?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>Standard view</button></span>':"";
+ bar.innerHTML='Signed in as <b>'+esc(u.name||u.email)+'</b> <span>'+esc(R[u.role]||u.role||"")+'</span>'+tg+adm+'<button type="button" id="gdc-out">Sign out</button>';
+ [].forEach.call(bar.querySelectorAll(".gdc-vt button"),function(b){b.onclick=function(){if(b.getAttribute("data-v")!==vw())window.gdcSetView(b.getAttribute("data-v"))}});
+ var vn=D.getElementById("gdc-viewnote");if(A&&V==="standard"){if(!vn){vn=D.createElement("div");vn.id="gdc-viewnote";D.body.insertBefore(vn,D.body.firstChild)}vn.innerHTML='<b>Standard view</b> \u2014 this is exactly what an agent sees. <button type="button">Back to Admin view</button>';vn.querySelector("button").onclick=function(){window.gdcSetView("admin")};H.classList.add("gdc-std")}else{if(vn)vn.parentNode.removeChild(vn);H.classList.remove("gdc-std")}
  D.getElementById("gdc-out").onclick=function(){api("/auth/logout",{method:"POST"}).catch(function(){}).then(function(){clrTok();location.reload()})};
  api("/auth/log",{method:"POST",body:{page:location.pathname+(location.hash||"")}}).catch(function(){});
  if(!timer)timer=setInterval(check,10*60*1000);
@@ -93,7 +106,7 @@ function unlock(u,fresh){
   .catch(function(){window.__gdcPD=0;var p=D.createElement("p");p.style.cssText="font:15px/1.5 \"IBM Plex Sans\",sans-serif;padding:40px 16px;text-align:center;color:#0C1236";p.textContent="The back office couldn\u2019t load. Refresh the page to try again.";D.body.appendChild(p)});
  }
 }
-function lock(msg){clrTok();H.classList.remove("gdc-in");if(bar&&bar.parentNode){bar.parentNode.removeChild(bar);bar=null}if(timer){clearInterval(timer);timer=null}H.classList.add("gdc-locked");showLogin(msg)}
+function lock(msg){clrTok();CUR=null;H.classList.remove("gdc-in");if(bar&&bar.parentNode){bar.parentNode.removeChild(bar);bar=null}if(timer){clearInterval(timer);timer=null}H.classList.add("gdc-locked");showLogin(msg)}
 function check(){if(!getTok())return lock("");api("/auth/me").then(function(j){if(j.__status===401)lock("Your session has ended. Please sign in again.")}).catch(function(){})}
 window.gdcApi=api;
 var m=/(?:^|[#&])gdc_token=([a-f0-9]{32,128})/.exec(location.hash||"");
@@ -387,7 +400,7 @@ h+='<section class="gp-sec" id="closing"><h2>Contract to closing &amp; complianc
  }else{
   h+='<section class="gp-hero"><p class="gp-eyebrow">Goyal &amp; DeCoster · Red Rock Holdings</p><h1>Client deal room</h1><p>Thank you for your interest. The opportunities below are presented in summary. Full offering memoranda and financial models are released to qualified parties after a signed confidentiality agreement, inside a secure viewing room: documents are watermarked to you, view-only, and access can be withdrawn at any time. To begin, request access on any deal and we will send the agreement.</p></section>';
  }
- (zone==="agent"?(D.role==="director"?(data.groups||[]):[]):(data.groups||[])).forEach(function(g){var ds=(g.deals||[]).filter(function(d){return zone==="agent"||d.client!==false});if(zone==="agent"&&g.placeholders){for(var k=0;k<g.placeholders;k++){var n=ds.length+1;ds.push({id:g.id+"-slot-"+n,name:"Deal "+n+" — awaiting presentation",loc:"Texas",type:"Pending Nasir's presentation",figs:[],owner:"Darrell DeLoatch",flyer:{label:"—",href:""},om:{status:"missing",note:"Awaiting"},proforma:{status:"missing",note:"Awaiting"},nda:true,placeholder:true})}}if(!ds.length)return;h+='<section class="gp-sec" id="'+esc(g.id)+'"><h2>'+esc(zone==="agent"?g.title:(g.clientTitle||g.title))+'</h2>'+(g.note&&zone==="agent"?'<p class="gp-note">'+esc(g.note)+'</p>':"")+'<div class="gp-grid">'+ds.map(function(d){return card(d,zone)}).join("")+'</div></section>'});
+ (zone==="agent"?(((window.gdcRole&&window.gdcRole())||D.role)==="director"?(data.groups||[]):[]):(data.groups||[])).forEach(function(g){var ds=(g.deals||[]).filter(function(d){return zone==="agent"||d.client!==false});if(zone==="agent"&&g.placeholders){for(var k=0;k<g.placeholders;k++){var n=ds.length+1;ds.push({id:g.id+"-slot-"+n,name:"Deal "+n+" — awaiting presentation",loc:"Texas",type:"Pending Nasir's presentation",figs:[],owner:"Darrell DeLoatch",flyer:{label:"—",href:""},om:{status:"missing",note:"Awaiting"},proforma:{status:"missing",note:"Awaiting"},nda:true,placeholder:true})}}if(!ds.length)return;h+='<section class="gp-sec" id="'+esc(g.id)+'"><h2>'+esc(zone==="agent"?g.title:(g.clientTitle||g.title))+'</h2>'+(g.note&&zone==="agent"?'<p class="gp-note">'+esc(g.note)+'</p>':"")+'<div class="gp-grid">'+ds.map(function(d){return card(d,zone)}).join("")+'</div></section>'});
  if(zone==="agent"&&!data.repository&&OFF.repo){h+='<section class="gp-sec" id="repository"><h2>Agent marketing repository</h2><p class="gp-note">House-style templates and brand assets in Drive.</p><a class="gp-btn" href="'+OFF.repo+'" target="_blank" rel="noopener">Open the repository</a></section>'}
  if(zone==="agent"&&data.repository){h+='<section class="gp-sec" id="repository"><h2>Agent marketing repository</h2><p class="gp-note">House-style templates and brand assets. Every piece already carries the licensed-brokerage line and Equal Housing mark; add your name, license and phone, nothing else. Files live in Drive › Goyal &amp; DeCoster › Brand Assets › Agent Marketing Repository.</p><div class="gp-repo">'+data.repository.map(function(r){return'<div class="gp-rep"><h4>'+esc(r.cat)+'</h4><ul>'+(r.items||[]).map(function(i){return'<li>'+esc(i)+'</li>'}).join("")+'</ul>'+(r.folder?'<a class="gp-btn" href="'+esc(r.folder)+'" target="_blank" rel="noopener">Open folder</a>':'<span class="gp-btn gp-dis">Folder coming</span>')+'</div>'}).join("")+'</div></section>'}
  if(zone==="agent"){var O2={};for(var k2 in OFF)O2[k2]=OFF[k2];if(data.office)for(var k3 in data.office)O2[k3]=data.office[k3];h+='<section class="gp-sec" id="contacts"><h2>Brokerage contacts</h2><div class="gp-ct">'+(O2.ct||[]).map(function(c){return'<div><b>'+esc(c[0])+'</b><i>'+esc(c[1])+'</i><a href="mailto:'+esc(c[2])+'">'+esc(c[2])+'</a>'+(c[3]?'<br>'+esc(c[3]):'')+'</div>'}).join('')+'<div><b>Office</b><i>Goyal &amp; DeCoster Realty</i>121 S Orange Ave, Suite 1100N<br>Orlando, FL 32801<br>(407) 693-7403 · <a href="mailto:info@goyaldecoster.com">info@goyaldecoster.com</a></div></div>'+'<p class="gp-sn-n" style="margin:14px 0 0">Need your Goyal &amp; DeCoster email signature file? Ask A.J. and it will be sent to your company email.</p>'+'</section>'}
@@ -535,11 +548,16 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return
 function build(){
  var q=document.querySelector(".gp-quick");if(!q||document.getElementById("gd-dash"))return;
  var hr=new Date().getHours(),g=hr<12?"Good morning":hr<18?"Good afternoon":"Good evening";
- var GP=window.GDC_PORTAL||{},role=GP.role||"",acks=(GP.me&&GP.me.acks)||{};
+ var GP=window.GDC_PORTAL||{},role=(window.gdcRole&&window.gdcRole())||GP.role||"",acks=(GP.me&&GP.me.acks)||{};
  var fd=function(ts){try{return new Date(ts).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}catch(e){return""}};
  var BF='<form class="gd-f" id="gd-bf"><div><label for="gd-bk">What is it</label><select id="gd-bk"><option>Flyer</option><option>Social post</option><option>Email blast</option><option>Sign</option><option>Other</option></select></div><div><label for="gd-bs">Property or subject</label><input id="gd-bs" required placeholder="e.g. Open house, 123 Main St Orlando"></div><div><label for="gd-bl">Link to the piece (Drive, Canva, Dropbox)</label><input id="gd-bl" type="url" placeholder="https://"></div><div><label for="gd-bn">Where and when it will go out</label><textarea id="gd-bn" placeholder="e.g. Instagram and MLS email, Saturday morning"></textarea></div><button type="submit">Submit for approval</button></form><div class="gd-msg" id="gd-bm"></div>';
  var h='<div id="gd-dash">';
  ROWS=ROWS.map(function(r){return{t:r.t,tag:r.tag,tiles:r.tiles.filter(function(t){return t.b!=="Leadership Cockpit"||role==="director"})}});
+ if(window.gdcView&&window.gdcView()==="admin"&&window.gdcAdminUrl){var AU=window.gdcAdminUrl();ROWS.unshift({t:"Admin",tag:"Admin view · directors and Managing Broker",tiles:[
+  {i:"gear",b:"Logins & Access Log",s:"Add people, new sign-in links, deactivate, who signed in",p:{h:"Logins & access log",steps:["Add a login: name, company email and role (Agent, Managing Broker, Director). The person gets a one-time sign-in link and sets their own password.","Forgot password or expired link: <b>New link</b> beside their name.","Someone leaves: <b>Deactivate</b> ends their sessions immediately.","The access log shows every sign-in, page view and admin action, with time and IP."],btns:[["Open Admin",AU,1]]}},
+  {i:"stamp",b:"Brand Approvals",s:"Approve or send back flyers, posts, email blasts, signs",p:{h:"Brand approvals",steps:["Every submission from <b>Submit for Brand Approval</b> lands in Admin › Brand approvals.","<b>Approve</b>, or <b>Needs changes</b> with a note the agent sees in their tile.","Waiting items are listed first."],btns:[["Open Brand approvals",AU,1]]}},
+  {i:"person",b:"Standard View",s:"See the back office exactly as an agent sees it",p:{h:"Switch to Standard view",steps:["Shows the back office exactly as an agent sees it: no deal register, no Leadership tile, no Admin tools.","Switch back any time from the bar at the bottom left, or the banner at the top of the page.","The view you pick stays for this browser tab."],btns:[["Switch to Standard view","#gdc-view-standard",1]]}}
+ ]})}
  ROWS.forEach(function(r,ri){
   h+='<div class="gd-row"><h2>'+esc(r.t)+'<span>'+esc(r.tag)+'</span></h2><div class="gd-grid">';
   r.tiles.forEach(function(t,ti){h+='<button type="button" class="gd-tile'+(t.soon?' gd-is-soon':'')+'" data-k="'+ri+'-'+ti+'"><span class="gd-ic"><svg viewBox="0 0 24 24">'+I[t.i]+'</svg></span><span><b>'+esc(t.b)+'</b><small>'+esc(t.s)+'</small></span><span class="gd-chev">›</span>'+(t.soon?'<span class="gd-soon">Coming</span>':'')+(t.ack&&acks[t.ack]?'<span class="gd-done">✓ Done</span>':'')+'</button>'});
@@ -561,6 +579,7 @@ function build(){
  });
  var api=window.gdcApi;
  function subs(){var ul=document.getElementById("gd-subs");if(!ul||!api)return;api("/portal/brand").then(function(j){var S={pending:"Waiting for Elsie",approved:"Approved",changes:"Needs changes"};var it=(j&&j.items)||[];ul.innerHTML=it.length?it.map(function(x){return'<li>#'+x.id+' '+esc(x.kind)+' · '+esc(x.subject)+'<span class="gd-st '+esc(x.status)+'">'+esc(S[x.status]||x.status)+'</span>'+(x.review_note?'<br><i>'+esc(x.review_note)+'</i>':'')+'</li>'}).join(""):'<li>Nothing submitted yet.</li>'}).catch(function(){ul.innerHTML='<li>Couldn\u2019t load your submissions.</li>'})}
+ dash.addEventListener("click",function(e){var sv=e.target.closest('a[href="#gdc-view-standard"]');if(sv&&window.gdcSetView){e.preventDefault();window.gdcSetView("standard");return}});
  dash.addEventListener("click",function(e){var t=e.target.closest(".gd-tile");if(t&&dash.querySelector('.gd-panel[data-k="'+t.getAttribute("data-k")+'"] #gd-subs'))subs();
   var a=e.target.closest(".gd-ackb");if(a&&api){a.disabled=true;api("/portal/ack",{method:"POST",body:{item:a.getAttribute("data-ack")}}).then(function(j){if(j&&j.ok){var p=document.createElement("p");p.className="gd-msg ok";p.textContent="\u2713 Done. Thank you.";a.replaceWith(p);var k=p.closest(".gd-panel").getAttribute("data-k"),tb=dash.querySelector('.gd-tile[data-k="'+k+'"]');if(tb&&!tb.querySelector(".gd-done"))tb.insertAdjacentHTML("beforeend",'<span class="gd-done">\u2713 Done</span>');if(window.GDC_PORTAL){GDC_PORTAL.me=GDC_PORTAL.me||{};GDC_PORTAL.me.acks=GDC_PORTAL.me.acks||{};GDC_PORTAL.me.acks[a.getAttribute("data-ack")]=j.ts}}else a.disabled=false}).catch(function(){a.disabled=false})}});
  dash.addEventListener("submit",function(e){if(e.target.id!=="gd-bf")return;e.preventDefault();var bm=document.getElementById("gd-bm"),btn=e.target.querySelector("button");var subj=document.getElementById("gd-bs").value.trim(),link=document.getElementById("gd-bl").value.trim(),kind=document.getElementById("gd-bk").value,notes=document.getElementById("gd-bn").value.trim();bm.className="gd-msg";bm.textContent="";
