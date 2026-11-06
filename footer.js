@@ -1,3 +1,4 @@
+/* v25.32 — AUTH v1.2 (Nov 6 2026, forgot-password): a temporary password from Admin forces "Choose your own password" at the next sign-in; "Change password" in the bottom bar for everyone (login service v0.5: /auth/change-password, /admin/users/temp-password) */
 /* v25.31 — AUTH v1.1 (Nov 6 2026, Elsie sign-in): login form checks for a full @goyaldecoster.com address before sending (several attempts used "goyaldecoster" alone) and has a Show-password toggle; pairs with login service v0.4 (set-password signs the person straight in) */
 /* v25.30 — PACKAGES v2 (Nov 6 2026): sale, lease and property-management packages S1–S9 live in SignNow Team Templates (GDC PKG S# - Rev 11-2026); L1–L6 re-pointed to the stamp-free Rev 11-2026 packages (no TransactionDesk / SkySlope / "licensed to" footers on any form); "Start a Sale or Lease Package" tile live; Forms Library: 44 forms + downloads (Stellar MLS data-entry sheets, EPA lead pamphlet) in docs/forms-library@9cd73e5 */
 /* v25.29 — PINEHILLS v1.1: Pine Hills OM link → revision with A.J. Lash replacing Raj Goyal on the Enquiries page (per Freddy); the two one-docs-base link rewriters now leave the Pine Hills OM on its own commit (it was being rewritten to the 99634b0 base, where the file doesn't exist → 404) (Nov 6 2026) */
@@ -79,7 +80,7 @@ function showLogin(msg){
  f.addEventListener("submit",function(ev){ev.preventDefault();er.textContent="";
   var e=em.value.trim(),p=pw.value;if(!e||!p){er.textContent="Enter your email and password.";return}if(e.indexOf("@")<0){er.textContent="Use your full company email address, for example first.last@goyaldecoster.com.";em.focus();return}
   go.disabled=true;go.textContent="Signing in\u2026";
-  api("/auth/login",{method:"POST",body:{email:e,password:p}}).then(function(j){
+  LASTPW=p;api("/auth/login",{method:"POST",body:{email:e,password:p}}).then(function(j){
    if(j.token){setTok(j.token,j.user);try{localStorage.setItem("gdc_last_email",e.toLowerCase())}catch(x){}unlock(j.user,true);return}
    go.disabled=false;go.textContent="Sign in";pw.value="";
    er.textContent=j.__status===401?"That email and password don't match an active login. If you haven't set your password yet, use the link in your sign-in email.":"Sign-in didn't go through. Please try again.";
@@ -93,13 +94,39 @@ window.gdcRole=function(){if(!CUR)return"";return isAdm(CUR)&&vw()==="standard"?
 window.gdcView=function(){return isAdm(CUR)?vw():""};
 window.gdcAdminUrl=function(){return API+"/admin#gdc_token="+getTok()};
 window.gdcSetView=function(v){try{sessionStorage.setItem("gdc_view",v==="standard"?"standard":"admin")}catch(e){}location.reload()};
+var LASTPW="";
+function showChange(u,forced){
+ var html='<h2>'+(forced?'Choose your own password':'Change your password')+'</h2><div class="ga-s">'+(forced?'You signed in with a temporary password. Pick your own now; it replaces the temporary one.':'Enter your current password, then the new one.')+' At least 10 characters, letters and a number.</div>'+
+ '<form id="ga-c" novalidate><label for="ga-c0">'+(forced?'Temporary password':'Current password')+'</label><input id="ga-c0" type="password" autocomplete="current-password" required>'+
+ '<label for="ga-c1">New password</label><input id="ga-c1" type="password" autocomplete="new-password" required><label for="ga-c2">Repeat the new password</label><input id="ga-c2" type="password" autocomplete="new-password" required>'+
+ '<label class="ga-show" style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-weight:400;margin:-6px 0 14px"><input type="checkbox" id="ga-cshow" style="width:auto;height:auto;margin:0;display:inline"> Show passwords</label>'+
+ '<button type="submit" id="ga-cgo">Save new password</button>'+(forced?'':'<button type="button" id="ga-ccancel" style="margin-top:10px;background:#fff;color:#0C1236;border:1px solid rgba(12,18,54,.25)">Cancel</button>')+'<div class="ga-e" id="ga-cerr" role="alert"></div></form>';
+ if(forced){H.classList.add("gdc-locked");card(html)}else{ov.innerHTML='<div class="ga-card"><div class="ga-k">Goyal &amp; DeCoster \u00b7 Agent back office</div>'+html+'</div>';mount()}
+ var c0=D.getElementById("ga-c0"),c1=D.getElementById("ga-c1"),c2=D.getElementById("ga-c2"),er=D.getElementById("ga-cerr"),go=D.getElementById("ga-cgo"),cc=D.getElementById("ga-ccancel");
+ if(LASTPW&&forced)c0.value=LASTPW;
+ D.getElementById("ga-cshow").onchange=function(e){c0.type=c1.type=c2.type=e.target.checked?"text":"password"};
+ if(cc)cc.onclick=function(){if(ov.parentNode)ov.parentNode.removeChild(ov)};
+ setTimeout(function(){(c0.value?c1:c0).focus()},50);
+ D.getElementById("ga-c").addEventListener("submit",function(ev){ev.preventDefault();er.textContent="";
+  if(!c0.value||!c1.value){er.textContent="Fill in every box.";return}if(c1.value!==c2.value){er.textContent="The two new passwords don\u2019t match.";return}
+  go.disabled=true;go.textContent="Saving\u2026";
+  api("/auth/change-password",{method:"POST",body:{current:c0.value,password:c1.value}}).then(function(j){
+   if(j.ok){LASTPW="";u.must_change=false;if(ov.parentNode)ov.parentNode.removeChild(ov);if(forced)unlock(u,true);else{alert("Password changed.")}return}
+   go.disabled=false;go.textContent="Save new password";
+   er.textContent=j.error==="wrong_current"?(forced?"That temporary password isn\u2019t right. Check the text A.J. or Elsie sent you.":"The current password isn\u2019t right."):(j.detail||"Could not save. Try again.");
+  }).catch(function(){go.disabled=false;go.textContent="Save new password";er.textContent="The sign-in service can\u2019t be reached right now."});
+ });
+}
+window.gdcChangePassword=function(){if(CUR)showChange(CUR,false)};
 function unlock(u,fresh){
+ if(u&&u.must_change){showChange(u,true);return}
  H.classList.remove("gdc-locked");H.classList.add("gdc-in");if(ov.parentNode)ov.parentNode.removeChild(ov);
  if(!bar){bar=D.createElement("div");bar.id="gdc-userbar";D.body.appendChild(bar)}
  CUR=u;var A=isAdm(u),V=vw();
  var adm=A&&V==="admin"?'<a href="'+window.gdcAdminUrl()+'" target="_blank" rel="noopener">Admin</a>':"";
  var tg=A?'<span class="gdc-vt" role="group" aria-label="View"><button type="button" data-v="admin"'+(V==="admin"?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>Admin view</button><button type="button" data-v="standard"'+(V==="standard"?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>Standard view</button></span>':"";
- bar.innerHTML='Signed in as <b>'+esc(u.name||u.email)+'</b> <span>'+esc(R[u.role]||u.role||"")+'</span>'+tg+adm+'<button type="button" id="gdc-out">Sign out</button>';
+ bar.innerHTML='Signed in as <b>'+esc(u.name||u.email)+'</b> <span>'+esc(R[u.role]||u.role||"")+'</span>'+tg+adm+'<button type="button" id="gdc-chpw">Change password</button><button type="button" id="gdc-out">Sign out</button>';
+ D.getElementById("gdc-chpw").onclick=function(){showChange(u,false)};
  [].forEach.call(bar.querySelectorAll(".gdc-vt button"),function(b){b.onclick=function(){if(b.getAttribute("data-v")!==vw())window.gdcSetView(b.getAttribute("data-v"))}});
  var vn=D.getElementById("gdc-viewnote");if(A&&V==="standard"){if(!vn){vn=D.createElement("div");vn.id="gdc-viewnote";D.body.insertBefore(vn,D.body.firstChild)}vn.innerHTML='<b>Standard view</b> \u2014 this is exactly what an agent sees. <button type="button">Back to Admin view</button>';vn.querySelector("button").onclick=function(){window.gdcSetView("admin")};H.classList.add("gdc-std")}else{if(vn)vn.parentNode.removeChild(vn);H.classList.remove("gdc-std")}
  D.getElementById("gdc-out").onclick=function(){api("/auth/logout",{method:"POST"}).catch(function(){}).then(function(){clrTok();location.reload()})};
