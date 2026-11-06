@@ -1,4 +1,4 @@
-/* v25.29 — PINEHILLS v1.1: Pine Hills OM link → revision with A.J. Lash replacing Raj Goyal on the Enquiries page (per Freddy) (Nov 6 2026) */
+/* v25.29 — PINEHILLS v1.1: Pine Hills OM link → revision with A.J. Lash replacing Raj Goyal on the Enquiries page (per Freddy); the two one-docs-base link rewriters now leave the Pine Hills OM on its own commit (it was being rewritten to the 99634b0 base, where the file doesn't exist → 404) (Nov 6 2026) */
 /* v25.28 — VIEWTOGGLE v1: directors (and the Managing Broker) switch between Admin view and Standard view (exactly what an agent sees); Admin row with Logins, Brand Approvals and the switch (Nov 6 2026) */
 /* v25.27 — PINEHILLS v1: Orlando Duplex Portfolio (4909–4927 N Pine Hills Rd, $1,000,000) card on home Commercial (after 901 N Grove) and /commercial, OM in docs/ (Nov 5 2026) */
 /* v25.26 — BACKOFFICE v1.1: "Start here" + Brand Rules + Submit for Brand Approval row (Elsie reviews in Admin); Leadership tile for directors only; Admin opens without a second sign-in; account text updated for individual logins (Nov 5 2026) */
@@ -279,7 +279,7 @@ D.addEventListener("DOMContentLoaded",run);addEventListener("load",function(){ru
 try{!function(){var D=document,S="99634b070be1a3a7db021a6d4a920ae3cdafa028",B="https://cdn.jsdelivr.net/gh/AJL2026-GDC/goyaldecoster-site@"+S+"/docs/",
 W=/^(?:https?:)?\/\/(?:cdn\.prod\.website-files\.com|uploads-ssl\.webflow\.com)\/6818e202bcb58913b92ece29\/[0-9a-f]+_((?:swiss-nova-district-development-overview|i-30-gateway-mixed-use-pd-om|820-creative-drive-development-strategy|2150-south-andrews-avenue-brochure|downtown-orlando-entertainment-complex-om|vago-inc-business-brochure|166-Hammock-Preserve-Loop-Flyer-GDC)\.pdf)(?:[?#].*)?$/i,
 G=/^(?:https?:)?\/\/cdn\.jsdelivr\.net\/gh\/AJL2026-GDC\/goyaldecoster-site@[0-9a-f]{7,40}\/docs\/([^?#]+\.pdf)(?:[?#].*)?$/i;
-function fx(u){if(!u)return u;var m=u.match(W);if(m)return B+m[1];m=u.match(G);if(m)return B+m[1];return u}
+function fx(u){if(!u)return u;var m=u.match(W);if(m)return B+m[1];m=u.match(G);if(m&&!/Orlando-Duplex-Portfolio-Pine-Hills/i.test(m[1]))return B+m[1];return u}
 function run(){[].forEach.call(D.querySelectorAll("a[href$='.pdf' i],a[href*='.pdf?' i],a[href*='.pdf#' i],[data-pdf],[data-href]"),function(e){["href","data-pdf","data-href"].forEach(function(k){var v=e.getAttribute(k),n=fx(v);v&&n!==v&&e.setAttribute(k,n)})})}
 var wo=window.open;window.open=function(u){var a=[].slice.call(arguments);a[0]=fx(u);return wo.apply(window,a)};
 D.addEventListener("DOMContentLoaded",run);addEventListener("load",function(){run();setTimeout(run,800)});var c=0,iv=setInterval(function(){run();++c>24&&clearInterval(iv)},500)}()}catch(e){console.error("gdc footer PDFMAP v1",e)}
@@ -319,7 +319,7 @@ S="99634b070be1a3a7db021a6d4a920ae3cdafa028",B="https://cdn.jsdelivr.net/gh/AJL2
 W=/^(?:https?:)?\/\/(?:cdn\.prod\.website-files\.com|uploads-ssl\.webflow\.com)\/6818e202bcb58913b92ece29\/[0-9a-f]+_((?:swiss-nova-district-development-overview|i-30-gateway-mixed-use-pd-om|820-creative-drive-development-strategy|2150-south-andrews-avenue-brochure|downtown-orlando-entertainment-complex-om|vago-inc-business-brochure|166-Hammock-Preserve-Loop-Flyer-GDC)\.pdf)(?:[?#].*)?$/i,
 G=/^(?:https?:)?\/\/cdn\.jsdelivr\.net\/gh\/AJL2026-GDC\/goyaldecoster-site@[0-9a-f]{7,40}\/docs\/([^?#]+\.pdf)(?:[?#].*)?$/i,
 DOC=/^(?:https?:)?\/\/(?:cdn\.jsdelivr\.net|cdn\.prod\.website-files\.com|uploads-ssl\.webflow\.com)\/[^?#]+\.(pdf|jpe?g|png)(?:[?#].*)?$/i;
-function fx(u){var m=u.match(W);if(m)return B+m[1];m=u.match(G);if(m)return B+m[1];return u}
+function fx(u){var m=u.match(W);if(m)return B+m[1];m=u.match(G);if(m&&!/Orlando-Duplex-Portfolio-Pine-Hills/i.test(m[1]))return B+m[1];return u}
 function desk(){try{return matchMedia("(hover:hover) and (pointer:fine)").matches&&innerWidth>=768}catch(e){return false}}
 function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function nice(u){var f=decodeURIComponent((u.split("?")[0].split("#")[0].split("/").pop()||"Document")).replace(/^[0-9a-f]{20,}_/i,"").replace(/\.(pdf|jpe?g|png)$/i,"").replace(/-gdc$/i,"").replace(/[-_]+/g," ").trim();if(/rrh group structure/i.test(f))return"Red Rock Holdings Group Structure";return f.replace(/\b([a-z])/g,function(c){return c.toUpperCase()}).replace(/\bOm\b/,"OM").replace(/\bPd\b/,"PD").replace(/\bI 30\b/,"I-30")}
