@@ -1,3 +1,4 @@
+/* v25.34 — MKTLIB v1 (Nov 9 2026): agent marketing library in the back office (#repository), served by login service v0.6 from the separate "GDC Agent Marketing" shared drive; thumbnails, search, folder chips, logged downloads; directors and the Managing Broker get "Refresh now" */
 /* v25.33 — EXEC v3 + TITLE v1 + PHOTO v3 (Nov 7 2026, Freddy request): A.J. Lash on /executive-team after Raj Goyal as "Executive Director - Operations & Systems" (title also on /a-j-lash, the home team strip, /agents and the portal contacts); new AI-edited headshots in docs/photos@63e1e7f (A.J. in a navy suit; Freddy in a grey suit so GDC differs from Red Rock Lending) replace the two Webflow assets site-wide */
 /* v25.32 — AUTH v1.2 (Nov 6 2026, forgot-password): a temporary password from Admin forces "Choose your own password" at the next sign-in; "Change password" in the bottom bar for everyone (login service v0.5: /auth/change-password, /admin/users/temp-password) */
 /* v25.31 — AUTH v1.1 (Nov 6 2026, Elsie sign-in): login form checks for a full @goyaldecoster.com address before sending (several attempts used "goyaldecoster" alone) and has a Show-password toggle; pairs with login service v0.4 (set-password signs the person straight in) */
@@ -637,3 +638,59 @@ function run(){try{titles()}catch(x){}try{photos()}catch(x){}}
 run();[300,1000,2500,5000,9000].forEach(function(t){setTimeout(run,t)});
 if(window.MutationObserver){var q;new MutationObserver(function(){clearTimeout(q);q=setTimeout(run,150)}).observe(D.documentElement,{childList:true,subtree:true})}
 }()}catch(e){console.error("gdc footer TITLE v1",e)}
+
+try{/*MKTLIB v1 (Nov 9 2026, A.J.'s decisions 1a–6b): the agent marketing library inside the back office. Files come from the separate shared drive "GDC Agent Marketing" through the login service (v0.6) — agents never get Drive links; every download is logged. Replaces the contents of the #repository section on /agent-portal.*/!function(){
+if(!/^\/agent-portal\/?$/.test(location.pathname))return;
+var API="https://gdc-portal-auth.andrewjlash.workers.dev",D=document,ST={files:[],folders:[],meta:{},q:"",top:"",busy:0};
+function tok(){try{return sessionStorage.getItem("gdc_token")||""}catch(e){return""}}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function role(){try{return(window.gdcRole&&window.gdcRole())||""}catch(e){return""}}
+function adm(){var r=role();return r==="director"||r==="managing_broker"}
+function api(p,o){o=o||{};o.headers=Object.assign({Authorization:"Bearer "+tok()},o.headers||{});return fetch(API+p,o)}
+function css(){if(D.getElementById("mkl-css"))return;var s=D.createElement("style");s.id="mkl-css";s.textContent=
+"#repository .mkl-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 14px}"+
+"#repository .mkl-chip{font:500 11px/1 'IBM Plex Sans',Helvetica,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:8px 10px;border:1px solid #c9ccd8;background:#fff;color:#0C1236;cursor:pointer}"+
+"#repository .mkl-chip.on{background:#0C1236;color:#fff;border-color:#0C1236}"+
+"#repository .mkl-q{flex:1 1 220px;min-width:180px;padding:8px 10px;border:1px solid #c9ccd8;font:13px 'IBM Plex Sans',Helvetica,Arial,sans-serif}"+
+"#repository .mkl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}"+
+"#repository .mkl-card{border:1px solid #e1e3ea;background:#fff;display:flex;flex-direction:column}"+
+"#repository .mkl-th{aspect-ratio:4/3;background:#ECEEF3 center/contain no-repeat;display:flex;align-items:center;justify-content:center;color:#8a8fa3;font:600 11px 'IBM Plex Sans',sans-serif;letter-spacing:.12em}"+
+"#repository .mkl-b{padding:10px 10px 12px;display:flex;flex-direction:column;gap:6px;flex:1}"+
+"#repository .mkl-n{font:600 13px/1.3 'IBM Plex Sans',Helvetica,Arial,sans-serif;color:#0C1236;word-break:break-word}"+
+"#repository .mkl-m{font:12px/1.3 'IBM Plex Sans',sans-serif;color:#5d6377}"+
+"#repository .mkl-dl{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}"+
+"#repository .mkl-dl button{font:500 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:8px 9px;border:1px solid #0C1236;background:#fff;color:#0C1236;cursor:pointer}"+
+"#repository .mkl-dl button:hover{background:#0C1236;color:#fff}"+
+"#repository .mkl-empty{padding:18px;border:1px dashed #c9ccd8;color:#5d6377;font-size:13.5px}"+
+"#repository .mkl-adm{font-size:12px;color:#5d6377;margin-left:auto}#repository .mkl-adm button{margin-left:8px}";
+D.head.appendChild(s)}
+function kind(f){var m=f.mime||"";if(/google-apps\.document/.test(m))return"Google Doc";if(/google-apps\.presentation/.test(m))return"Google Slides";if(/google-apps\.spreadsheet/.test(m))return"Google Sheet";if(/pdf/.test(m))return"PDF";if(/^image\//.test(m))return(m.split("/")[1]||"image").toUpperCase();var e=/\.([a-z0-9]{2,5})$/i.exec(f.name||"");return e?e[1].toUpperCase():"File"}
+function sz(n){if(!n)return"";return n>1048576?(n/1048576).toFixed(1)+" MB":Math.max(1,Math.round(n/1024))+" KB"}
+function topOf(f){return(f.path||"").split(" / ")[0]||"Other"}
+function sec(){var s=D.getElementById("repository");if(!s){var c=D.getElementById("contacts");if(!c)return null;s=D.createElement("section");s.className="gp-sec";s.id="repository";c.parentNode.insertBefore(s,c)}return s}
+function shell(s){css();s.setAttribute("data-mkl","1");s.innerHTML='<h2>Agent marketing library</h2><p class="gp-note">House-style templates and brand assets. Download what you need, add your name, license and phone in the contact block, and send every finished piece through <b>Submit for Brand Approval</b> before it goes out. New files appear here automatically once Elsie or a director adds them.</p><div class="mkl-bar" id="mkl-bar"></div><div id="mkl-body"><div class="mkl-empty">Loading the library…</div></div>'}
+function load(){if(ST.busy)return;ST.busy=1;api("/portal/marketing").then(function(r){return r.json()}).then(function(j){ST.busy=0;ST.files=j.files||[];ST.folders=j.folders||[];ST.meta=j.meta||{};draw()}).catch(function(){ST.busy=0;var b=D.getElementById("mkl-body");if(b)b.innerHTML='<div class="mkl-empty">The library could not be loaded. Refresh the page; if it keeps happening, tell A.J.</div>'})}
+function draw(){var bar=D.getElementById("mkl-bar"),body=D.getElementById("mkl-body");if(!bar||!body)return;
+ var tops=[];ST.files.forEach(function(f){var t=topOf(f);if(tops.indexOf(t)<0)tops.push(t)});tops.sort();
+ var when=ST.meta.last_sync?new Date(ST.meta.last_sync).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"";
+ bar.innerHTML='<button class="mkl-chip'+(ST.top?"":" on")+'" data-t="">All</button>'+tops.map(function(t){return'<button class="mkl-chip'+(ST.top===t?" on":"")+'" data-t="'+esc(t)+'">'+esc(t)+'</button>'}).join("")+'<input class="mkl-q" id="mkl-q" type="search" placeholder="Search the library" value="'+esc(ST.q)+'">'+(adm()?'<span class="mkl-adm">'+(when?"Updated "+esc(when):"Not synced yet")+'<button class="mkl-chip" id="mkl-sync">Refresh now</button></span>':"");
+ var q=ST.q.toLowerCase(),list=ST.files.filter(function(f){return(!ST.top||topOf(f)===ST.top)&&(!q||(f.name+" "+(f.path||"")).toLowerCase().indexOf(q)>=0)});
+ if(!ST.files.length){body.innerHTML='<div class="mkl-empty">The library is being set up. Files will appear here shortly.</div>';return}
+ if(!list.length){body.innerHTML='<div class="mkl-empty">Nothing matches. Try another word or choose All.</div>';return}
+ body.innerHTML='<div class="mkl-grid">'+list.map(function(f){var btn=f.as?f.as.map(function(a){return'<button data-id="'+esc(f.id)+'" data-as="'+a+'">'+(a==="pdf"?"PDF":a==="docx"?"Word":a==="pptx"?"PowerPoint":a==="xlsx"?"Excel":a.toUpperCase())+'</button>'}).join(""):'<button data-id="'+esc(f.id)+'">Download</button>';
+  return'<div class="mkl-card"><div class="mkl-th" data-th="'+(f.thumb?esc(f.id):"")+'">'+(f.thumb?"":esc(kind(f)))+'</div><div class="mkl-b"><div class="mkl-n">'+esc(f.name)+'</div><div class="mkl-m">'+esc(f.path||"")+'<br>'+esc(kind(f))+(f.size?" · "+sz(f.size):"")+'</div><div class="mkl-dl">'+btn+'</div></div></div>'}).join("")+'</div>';
+ thumbs()}
+var io=("IntersectionObserver" in window)?new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){io.unobserve(e.target);th(e.target)}})},{rootMargin:"200px"}):null;
+function thumbs(){[].forEach.call(D.querySelectorAll("#repository [data-th]"),function(el){if(!el.getAttribute("data-th"))return;if(io)io.observe(el);else th(el)})}
+var TC={};function th(el){var id=el.getAttribute("data-th");if(TC[id]){el.style.backgroundImage="url("+TC[id]+")";return}api("/portal/marketing/thumb?id="+encodeURIComponent(id)).then(function(r){return r.ok?r.blob():null}).then(function(b){if(!b)return;TC[id]=URL.createObjectURL(b);el.style.backgroundImage="url("+TC[id]+")"}).catch(function(){})}
+function dl(btn){var id=btn.getAttribute("data-id"),as=btn.getAttribute("data-as")||"",t=btn.textContent;btn.textContent="Preparing…";btn.disabled=true;
+ api("/portal/marketing/file?id="+encodeURIComponent(id)+(as?"&as="+as:"")).then(function(r){if(!r.ok)throw 0;var cd=r.headers.get("Content-Disposition")||"",m=/filename\*=UTF-8''([^;]+)/.exec(cd),n=m?decodeURIComponent(m[1]):"download";return r.blob().then(function(b){return[b,n]})}).then(function(x){var u=URL.createObjectURL(x[0]),a=D.createElement("a");a.href=u;a.download=x[1];D.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove()},4000);btn.textContent=t;btn.disabled=false}).catch(function(){btn.textContent="Try again";btn.disabled=false})}
+D.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("#repository button");if(!b)return;
+ if(b.hasAttribute("data-t")){ST.top=b.getAttribute("data-t");draw();return}
+ if(b.id==="mkl-sync"){b.textContent="Refreshing…";b.disabled=true;api("/admin/marketing/sync",{method:"POST"}).then(function(r){return r.json()}).then(function(){load()}).catch(function(){b.textContent="Try again";b.disabled=false});return}
+ if(b.hasAttribute("data-id"))dl(b)});
+D.addEventListener("input",function(e){if(e.target&&e.target.id==="mkl-q"){ST.q=e.target.value;var p=e.target.selectionStart;draw();var q=D.getElementById("mkl-q");if(q){q.focus();try{q.setSelectionRange(p,p)}catch(x){}}}});
+function run(){if(!tok())return;var s=sec();if(!s)return;if(s.getAttribute("data-mkl")==="1"&&D.getElementById("mkl-body"))return;shell(s);load()}
+var n=0,iv=setInterval(function(){run();if((D.getElementById("repository")&&D.getElementById("repository").getAttribute("data-mkl")==="1")||++n>120)clearInterval(iv)},250);
+window.addEventListener("gdc:rendered",function(){setTimeout(run,0)});
+}()}catch(e){console.error("gdc footer MKTLIB v1",e)}
